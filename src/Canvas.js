@@ -7,18 +7,18 @@ import {
 
 const Canvas = (props) => {
   const canvasRef = useRef(null);
-  const [oscillator, setOscillator] = useState(0);
+  const [clock, setClock] = useState(0);
   const [controlsRefArray, setControlsRefArray] = useState([]);
   const [expiresIn, setExpiresIn] = useState(-1);
 
   useInterval(() => {
-    if(Math.floor(oscillator)%16 === 0){
+    if(Math.floor(clock)%16 === 0){
       clearRect(canvasRef.current.getContext("2d"));
       controlsRefArray.forEach((element) => {
-        element.current.draw(oscillator/1000);
+        element.current.draw(clock/1000);
       });
     }
-    setOscillator(oscillator + 1);
+    setClock(clock + 1);
     setExpiresIn(expiresIn - 1);
   }, 1);
 

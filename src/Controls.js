@@ -1,5 +1,6 @@
 import React, {
   useCallback,
+  useEffect,
   useState,
   useImperativeHandle,
   forwardRef,
@@ -9,9 +10,8 @@ const Controls = forwardRef((props, ref) => {
   const [radius1, setRadius1] = useState(15);
   const [radius2, setRadius2] = useState(50);
   const [ratio, setRatio] = useState(42);
-  const [resolution, setResolution] = useState(0.0001);
   const [oscillatorAmplitude, setOscillatorAmplitude] = useState(2);
-  const [oscillatorSpeed, setOscillatorSpeed] = useState(0.5);
+  const [oscillatorSpeed, setOscillatorSpeed] = useState(2);
   const [oscillatorOffset, setOscillatorOffset] = useState(10);
   const [color, setColor] = useState("rgba(255, 0, 0, 1)");
   const [red, setRed] = useState(255);
@@ -19,92 +19,62 @@ const Controls = forwardRef((props, ref) => {
   const [blue, setBlue] = useState(0);
   const [alpha, setAlpha] = useState(1);
   const [weight, setWeight] = useState(10);
-  const [beats, setBeats] = useState(10);
-  const [timbre, setTimbre] = useState(new Array(12).fill(false));
-  const [volume, setVolume] = useState(10);
 
-  const handleTimbreChange = useCallback(
-    (value) => {
-      setTimbre([
-        ...timbre.slice(0, value),
-        !timbre[value],
-        ...timbre.slice(Number(value) + 1, 12),
-      ]);
-      console.log(timbre);
+  useEffect(() => {
+    setColor("rgba(" + red + "," + green + "," + blue + "," + alpha + ")");
+  }, [alpha, blue, green, red]);
+
+  const drawSpirograph = useCallback(
+    (
+      context,
+      cx,
+      cy,
+      radius1,
+      radius2,
+      ratio,
+      color,
+      weight,
+      clock,
+      oscillatorMultiplier,
+      oscillatorOffset,
+      oscillatorSpeed
+    ) => {
+      var x, y, theta;
+
+      // Move to starting point (theta = 0)
+      context.moveTo(cx + radius1 + radius2, cy);
+      context.beginPath();
+
+      // Draw segments from theta = 0 to theta = 2PI
+      for (theta = 0; theta <= Math.PI * 2+0.001; theta += 0.001) { // we need that extra 0.001 for the spirograph not to have a little gap
+        x =
+          cx +
+          radius1 *
+          (Math.sin(clock*oscillatorSpeed) * oscillatorMultiplier + oscillatorOffset) *
+            Math.cos(theta) +
+          radius2 * Math.cos(theta * ratio);
+        y =
+          cy +
+          radius1 *
+            (Math.sin(clock*oscillatorSpeed) * oscillatorMultiplier + oscillatorOffset) *
+            Math.sin(theta) +
+          radius2 * Math.sin(theta * ratio);
+        context.lineTo(x, y);
+      }
+
+      // Apply stroke
+      context.strokeStyle = color;
+      context.lineWidth = weight;
+      context.stroke();
+
+      context.globalCompositeOperation = "difference";
+      context.fillRect(0, 0, 500, 500);
     },
-    [timbre]
+    []
   );
 
-  const handleColorChange = (color, value) => {
-    switch (color) {
-      case "red":
-        setRed(value);
-        break;
-      case "green":
-        setGreen(value);
-        break;
-      case "blue":
-        setBlue(value);
-        break;
-      case "alpha":
-        setAlpha(value);
-        break;
-    }
-    setColor("rgba(" + red + "," + green + "," + blue + "," + alpha + ")");
-  };
-
-  function drawSpirograph(
-    context,
-    cx,
-    cy,
-    radius1,
-    radius2,
-    ratio,
-    resolution,
-    color,
-    weight,
-    oscillator,
-    oscillatorMultiplier,
-    oscillatorOffset
-  ) {
-    if (resolution == 0) {
-      return;
-    }
-
-    var x, y, theta;
-
-    // Move to starting point (theta = 0)
-    context.moveTo(cx + radius1 + radius2, cy);
-    context.beginPath();
-
-    // Draw segments from theta = 0 to theta = 2PI
-    for (theta = 0; theta <= Math.PI * 2; theta += resolution) {
-      x =
-        cx +
-        radius1 *
-          (Math.sin(oscillator) * oscillatorMultiplier + oscillatorOffset) *
-          Math.cos(theta) +
-        radius2 * Math.cos(theta * ratio);
-      y =
-        cy +
-        radius1 *
-          (Math.sin(oscillator) * oscillatorMultiplier + oscillatorOffset) *
-          Math.sin(theta) +
-        radius2 * Math.sin(theta * ratio);
-      context.lineTo(x, y);
-    }
-
-    // Apply stroke
-    context.strokeStyle = color;
-    context.lineWidth = weight;
-    context.stroke();
-
-    context.globalCompositeOperation = "difference";
-    context.fillRect(0, 0, 500, 500);
-  }
-
   const draw = useCallback(
-    (oscillator) => {
+    (clock) => {
       if (props.canvasRef.current == null) {
         return;
       }
@@ -118,12 +88,12 @@ const Controls = forwardRef((props, ref) => {
         radius1,
         radius2,
         ratio,
-        resolution,
         color,
         weight,
-        oscillator * oscillatorSpeed,
+        clock,
         oscillatorAmplitude,
-        oscillatorOffset
+        oscillatorOffset,
+        oscillatorSpeed
       );
     },
     [
@@ -131,7 +101,6 @@ const Controls = forwardRef((props, ref) => {
       radius1,
       radius2,
       ratio,
-      resolution,
       props,
       color,
       weight,
@@ -222,7 +191,7 @@ const Controls = forwardRef((props, ref) => {
         max="255"
         value={red}
         onChange={(event) => {
-          handleColorChange("red", event.target.value);
+          setRed(event.target.value);
         }}
       />
       <label>green:{green}</label>
@@ -232,7 +201,8 @@ const Controls = forwardRef((props, ref) => {
         max="255"
         value={green}
         onChange={(event) => {
-          handleColorChange("green", event.target.value);
+          setGreen(event.target.value);
+          console.log(green)
         }}
       />
       <label>blue:{blue}</label>
@@ -242,7 +212,7 @@ const Controls = forwardRef((props, ref) => {
         max="255"
         value={blue}
         onChange={(event) => {
-          handleColorChange("blue", event.target.value);
+          setBlue(event.target.value)
         }}
       />
       <label>alpha:{alpha}</label>
@@ -253,7 +223,7 @@ const Controls = forwardRef((props, ref) => {
         step="0.1"
         value={alpha}
         onChange={(event) => {
-          handleColorChange("alpha", event.target.value);
+          setAlpha(event.target.value);
         }}
       />
       <label>
@@ -269,125 +239,6 @@ const Controls = forwardRef((props, ref) => {
           }}
         />
       </label>
-      <label>beats:{beats}</label>
-      <input
-        type="range"
-        min="0"
-        max="1"
-        step="0.1"
-        value={beats}
-        onChange={(event) => {
-          setBeats(event.target.value);
-        }}
-      />
-      <label>tabmre:</label>
-      <label>1</label>
-      <input
-        type="checkbox"
-        value={0}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>2</label>
-      <input
-        type="checkbox"
-        value={1}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>3</label>
-      <input
-        type="checkbox"
-        value={2}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>4</label>
-      <input
-        type="checkbox"
-        value={3}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>5</label>
-      <input
-        type="checkbox"
-        value={4}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>6</label>
-      <input
-        type="checkbox"
-        value={5}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>7</label>
-      <input
-        type="checkbox"
-        value={6}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>8</label>
-      <input
-        type="checkbox"
-        value={7}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>9</label>
-      <input
-        type="checkbox"
-        value={8}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>10</label>
-      <input
-        type="checkbox"
-        value={9}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>11</label>
-      <input
-        type="checkbox"
-        value={10}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>12</label>
-      <input
-        type="checkbox"
-        value={11}
-        onChange={(e) => {
-          handleTimbreChange(e.target.value);
-        }}
-      />
-      <label>volume:{volume}</label>
-      <input
-        type="range"
-        min="1"
-        max="30"
-        step="1"
-        value={volume}
-        onChange={(event) => {
-          setVolume(event.target.value);
-        }}
-      />
     </form>
   );
 });
