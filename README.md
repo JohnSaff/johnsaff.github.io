@@ -46,7 +46,7 @@ The oscillator multiplier is the amplitude of the oscillation. Make it bigger an
 
 ### Colors
 
-You can set the color of each spirograph by changing the rgba values. A feature of the HTML canvas element is that when two drawn lines overlap the color on top is subtracted from the color below and the absolute value is taken. This means that if we had a spirograph of `rgba(255,0,20)` drawn on top of a spirograph of `rgba(200,20,0)` we would get a resulting color of `rgba(55,20,0)` as we subtract the top from the bottom and take the absolute value. Another way of thinking about this would be to just subtract the bigger number from the smaller number.
+You can set the color of each spirograph by changing the rgba values. A feature of the HTML canvas element is that when two drawn lines overlap the color on top is subtracted from the color below and the absolute value is taken. This means that if we had a spirograph of `rgba(255,0,20,1)` drawn on top of a spirograph of `rgba(200,20,0,1)` we would get a resulting color of `rgba(55,20,0,1)` as we subtract the top from the bottom and take the absolute value. Another way of thinking about this would be to just subtract the bigger number from the smaller number.
 
 This little quirk of canvases means you can make intricate and beautiful color patterns by overlaying different coloured spirographs on top of each other.
 
