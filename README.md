@@ -15,8 +15,10 @@ A spirograph is a geometric pattern made with two differently sized rings. The b
 The equation of the line drawn is 
 
 $$
-x = c_x + r_1 × cos(θ) + r_2 × cos(θ × ratio) \\
-y = c_y + r_1 × sin(θ) + r_2 × cos(θ × ratio),
+\begin{align*}
+x &= c_x + r_1 × cos(θ) + r_2 × cos(θ × ratio) \\
+y &= c_y + r_1 × sin(θ) + r_2 × cos(θ × ratio),
+\end{align*}
 $$
 
 where $c_x$ and $c_y$ are the $x$ and $y$ coordinateS of the center of the large circle, $θ$ is the angle to the center of the inside circle, $x$ and $y$ are the coordinates of the pen at angle $θ$, $r_1$ and $r_2$ are the distance from the center of the outside circle to the center of the inside circle and the radius of the inner circle respectively, and $ratio$ is the ratio of the number of teeth in the inside to the number of teeth on the outside. 
@@ -31,7 +33,7 @@ A few extra parameters have been added to the above equation. There's a clock th
 
 $$
 \begin{align*}
-x &= c_x + r_1 \times (sin(t) \times k + r_o) * cos(\theta) + r_2 \times cos(\theta \times ratio) \\
+x &= c_x + r_1 \times (sin(t) \times k + r_o) \times cos(\theta) + r_2 \times cos(\theta \times ratio) \\
       y &= c_y + r_1 \times (sin(t) \times k + r_o) \times sin(\theta) + r_2 \times sin(\theta \times ratio),
 \end{align*}
 $$
