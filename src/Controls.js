@@ -1,6 +1,5 @@
 import React, {
   useCallback,
-  useEffect,
   useState,
   useImperativeHandle,
   forwardRef,
@@ -11,7 +10,7 @@ const Controls = forwardRef((props, ref) => {
   const [radius2, setRadius2] = useState(50);
   const [ratio, setRatio] = useState(42);
   const [oscillatorAmplitude, setOscillatorAmplitude] = useState(2);
-  const [oscillatorSpeed, setOscillatorSpeed] = useState(2);
+  const [oscillatorSpeed, setOscillatorSpeed] = useState(0.5);
   const [oscillatorOffset, setOscillatorOffset] = useState(10);
   const [color, setColor] = useState("rgba(255, 0, 0, 1)");
   const [red, setRed] = useState(255);
@@ -20,61 +19,78 @@ const Controls = forwardRef((props, ref) => {
   const [alpha, setAlpha] = useState(1);
   const [weight, setWeight] = useState(10);
 
-  useEffect(() => {
+  const resolution = 0.0001;
+
+  const handleColorChange = (color, value) => {
+    switch (color) {
+      case "red":
+        setRed(value);
+        break;
+      case "green":
+        setGreen(value);
+        break;
+      case "blue":
+        setBlue(value);
+        break;
+      case "alpha":
+        setAlpha(value);
+        break;
+    }
     setColor("rgba(" + red + "," + green + "," + blue + "," + alpha + ")");
-  }, [alpha, blue, green, red]);
+  };
 
-  const drawSpirograph = useCallback(
-    (
-      context,
-      cx,
-      cy,
-      radius1,
-      radius2,
-      ratio,
-      color,
-      weight,
-      clock,
-      oscillatorMultiplier,
-      oscillatorOffset,
-      oscillatorSpeed
-    ) => {
-      var x, y, theta;
+  function drawSpirograph(
+    context,
+    cx,
+    cy,
+    radius1,
+    radius2,
+    ratio,
+    resolution,
+    color,
+    weight,
+    oscillator,
+    oscillatorMultiplier,
+    oscillatorOffset
+  ) {
+    if (resolution == 0) {
+      return;
+    }
 
-      // Move to starting point (theta = 0)
-      context.moveTo(cx + radius1 + radius2, cy);
-      context.beginPath();
+    var x, y, theta;
 
-      // Draw segments from theta = 0 to theta = 2PI
-      for (theta = 0; theta <= Math.PI * 2+0.001; theta += 0.001) { // we need that extra 0.001 for the spirograph not to have a little gap
-        x =
-          cx +
-          radius1 *
-          (Math.sin(clock*oscillatorSpeed) * oscillatorMultiplier + oscillatorOffset) *
-            Math.cos(theta) +
-          radius2 * Math.cos(theta * ratio);
-        y =
-          cy +
-          radius1 *
-            (Math.sin(clock*oscillatorSpeed) * oscillatorMultiplier + oscillatorOffset) *
-            Math.sin(theta) +
-          radius2 * Math.sin(theta * ratio);
-        context.lineTo(x, y);
-      }
+    // Move to starting point (theta = 0)
+    context.moveTo(cx + radius1 + radius2, cy);
+    context.beginPath();
 
-      // Apply stroke
-      context.strokeStyle = color;
-      context.lineWidth = weight;
-      context.stroke();
+    // Draw segments from theta = 0 to theta = 2PI
+    for (theta = 0; theta <= Math.PI * 2; theta += resolution) {
+      x =
+        cx +
+        radius1 *
+          (Math.sin(oscillator) * oscillatorMultiplier + oscillatorOffset) *
+          Math.cos(theta) +
+        radius2 * Math.cos(theta * ratio);
+      y =
+        cy +
+        radius1 *
+          (Math.sin(oscillator) * oscillatorMultiplier + oscillatorOffset) *
+          Math.sin(theta) +
+        radius2 * Math.sin(theta * ratio);
+      context.lineTo(x, y);
+    }
 
-      context.globalCompositeOperation = "difference";
-      context.fillRect(0, 0, 500, 500);
-    },
-    []
-  );
+    // Apply stroke
+    context.strokeStyle = color;
+    context.lineWidth = weight;
+    context.stroke();
+
+    context.globalCompositeOperation = "difference";
+    context.fillRect(0, 0, 500, 500);
+  }
 
   const draw = useCallback(
-    (clock) => {
+    (oscillator) => {
       if (props.canvasRef.current == null) {
         return;
       }
@@ -88,12 +104,12 @@ const Controls = forwardRef((props, ref) => {
         radius1,
         radius2,
         ratio,
+        resolution,
         color,
         weight,
-        clock,
+        oscillator * oscillatorSpeed,
         oscillatorAmplitude,
-        oscillatorOffset,
-        oscillatorSpeed
+        oscillatorOffset
       );
     },
     [
@@ -101,6 +117,7 @@ const Controls = forwardRef((props, ref) => {
       radius1,
       radius2,
       ratio,
+      resolution,
       props,
       color,
       weight,
@@ -121,8 +138,17 @@ const Controls = forwardRef((props, ref) => {
   );
 
   return (
-    <form style={{ marginBottom: 24 }}>
-      <label>r1:{radius1}</label>
+    <>
+    <h1>spirograph {props.number+1}</h1>
+    <form
+      style={{
+        marginBottom: 24,
+        display: "flex",
+        flexDirection: "column",
+        color: "black",
+      }}
+    >
+      <label>inner radius:{radius1}</label>
       <input
         type="range"
         min="1"
@@ -132,7 +158,7 @@ const Controls = forwardRef((props, ref) => {
           setRadius1(event.target.value);
         }}
       />
-      <label>r2:{radius2}</label>
+      <label>outer radius:{radius2}</label>
       <input
         type="range"
         min="1"
@@ -191,7 +217,7 @@ const Controls = forwardRef((props, ref) => {
         max="255"
         value={red}
         onChange={(event) => {
-          setRed(event.target.value);
+          handleColorChange("red", event.target.value);
         }}
       />
       <label>green:{green}</label>
@@ -201,8 +227,7 @@ const Controls = forwardRef((props, ref) => {
         max="255"
         value={green}
         onChange={(event) => {
-          setGreen(event.target.value);
-          console.log(green)
+          handleColorChange("green", event.target.value);
         }}
       />
       <label>blue:{blue}</label>
@@ -212,10 +237,10 @@ const Controls = forwardRef((props, ref) => {
         max="255"
         value={blue}
         onChange={(event) => {
-          setBlue(event.target.value)
+          handleColorChange("blue", event.target.value);
         }}
       />
-      <label>alpha:{alpha}</label>
+      <label>opacity:{alpha}</label>
       <input
         type="range"
         min="0"
@@ -223,23 +248,22 @@ const Controls = forwardRef((props, ref) => {
         step="0.1"
         value={alpha}
         onChange={(event) => {
-          setAlpha(event.target.value);
+          handleColorChange("alpha", event.target.value);
         }}
       />
-      <label>
-        weight:{weight}
-        <input
-          type="range"
-          min="1"
-          max="30"
-          step="1"
-          value={weight}
-          onChange={(event) => {
-            setWeight(event.target.value);
-          }}
-        />
-      </label>
+      <label>line weight:{weight}</label>
+      <input
+        type="range"
+        min="1"
+        max="30"
+        step="1"
+        value={weight}
+        onChange={(event) => {
+          setWeight(event.target.value);
+        }}
+      />
     </form>
+    </>
   );
 });
 

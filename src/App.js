@@ -5,7 +5,7 @@ function App() {
   return (
     <div
       className="App"
-      style={{ backgroundColor: "black", height: "100pc", color: "white" }}
+      style={{ backgroundColor: "black", height: "100pc", color: "white",overflow:"hidden" }}
     >
       <Canvas />
     </div>

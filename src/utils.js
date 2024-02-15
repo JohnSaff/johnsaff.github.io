@@ -1,7 +1,7 @@
 import { useRef, useEffect } from "react";
 
-const clearRect = (context) => {
-  context.clearRect(0, 0, 500, 500*16/9);
+const clearRect = (current) => {
+  current.getContext("2d").clearRect(0, 0, current.width, current.height);
 };
 
 function useInterval(callback, delay) {
